@@ -1,0 +1,209 @@
+#Anotações curso oracle
+
+- docker start oracle11-docker
+- docker exec -it oracle11-docker /bin/bash
+
+
+
+tipo NUMBER - (8,2): o número 8 determina o máximo de numeros e 2 significa o máximo de números decimais. Nesse caso o valor máximo seria: 999999,99.
+
+SYSDATE - gera a hora atual do sistema. É possível utilizar como, por exemplo, SYSDATE - 5 (isso geraria a data atual -5 dias)
+
+## COMMIT e ROLLBACK 
+
+No oracle é possível realizar o commit e o rollback sem iniciar um ponto de partida. Dessa forma, é importante sempre lembrar de dar um COMMIT.
+
+## Comandos para SELECTs e etc...
+
+Upper(nomeCampo) -- ignora letras minúsculas, transformando-as em maiusculas
+Lower(nomeCampo) -- transforma em minúsculas
+InitCap(nomeCampo) -- transforma em minúsculas, porém a primeira letra é maiúscula
+
+Concat(nomeCampo, nomeCampo) -- concatena os campos, mesma coisa que usar ||
+InStr(nomeCampo, 'valorString') -- acha o indice da string no valor do campo
+SubStr(nomeCampo, posicaoInicial, quantidadeCaracteres) -- exibe os caracteres de um campo a partir da posicaoInical 
+SUBSTR(pTelefone, 1,4)||'-'||SUBSTR(pTelefone, 5, 4); -- da pra usar assim tmb
+
+Length(nomeCampo) -- conta os caracteres de um campo
+LPad(nomeCampo, numeroCaracteres, 'valorAEsquerda') -- formata para mostrar uma quantidade especifica de caracteres e para completara utiliza o valor do segundo parametro
+Replace(nomeCampo, valorOriginal, valoSubstituto) -- ...
+
+Round(nomeCampo, numeroDecimais) -- limita as casas decimais de um valor numérico
+
+Nvl(nomeColuna, valor) -- "trata" das colunas com tipos nulos, no parametro 'valor' é possível alterar os campos nulos para o valor inserido
+Vnl2(*nomeColuna, nomeColuna, valor) -- funciona como um else if. Se *nomeColuna = Null então 
+
+Trunc(nomeCampoData) -- zera/retira a hora dos campos tipo data ou retira os ultimos valores de um campo number (tmb pode ser usado assim Trunc(nomeCampoData, quantidade))
+
+Mod(nomeCampo, divisao) -- pega o resto da divisão
+
+TO_DATE('data hora', 'formatoData formatoHora') -- utilizado em consultas com datas, como em BETWEEN
+To_Char(data, 'formatoData') -- formata a data para o formato digitado. Ex: DD/MM/YYYY -- DY, DAY, MONTH... HH24:MI:SS
+
+IN e NOT IN -- é semelhante ao WHERE = e <>, porém é como se fosse criado uma selação de valores. Ex: nomeCampo IN(1, 2, 3) 
+
+UNION -- une dois selects, se você por no meio deles. Pode ser usado com vários select, porém precisa por vários unions tmb
+UNION ALL -- mesma coisa só que mostra TODOS os valores (dos dois selects)
+INTERSECT -- funciona como o UNION, porém só trás valores que existem nos dois select
+MINUS -- é o contrário do INTERSECT, ou seja, só trás valores que não existem nos dois selects
+
+GROUP BY ... {
+ROLLUP() -- faz um subtotal, onde os valores duplicados são somados em uma linha separada
+CUBE() -- mesma coisa que o rollup, porém tmb faz um subtotal separado 
+GROUPING/_ID -- agrupa os valores e gera um subtotal
+}
+
+RANK() -- faz um rank, usa-se com order by. Ex: RANK() OVER (ORDER BY ....). Também da pra usar com o PARTITION BY, que forma grupos
+use o rank no select[ aqui ]from. Ex: RANK() OVER (PARTITION BY campo ORDER BY condicao) 
+DENSE RANK() -- quando os valores são "empatados", eles ficam na mesma posição do rank
+## Tipos de campos
+
+   INTEGER      - 1, 2 -- numero inteiro -> number(38)
+
+   NUMBER(5,2)  - 999,99
+   NUMERIC(5,2) - 999,99
+
+   DATE         - '10/03/2011 00:00:00'
+
+   VARCHAR(10)  -- Sinonimo
+   VARCHAR2(10) - 'MARCIO'
+
+   CHAR(10)     - 'MARCIO    '
+
+## Calculos com datas
+
+arquivo secao_04.sql
+
+## Tabelas
+
+ALTER TABLE MODIFY/ADD/RENAME COLUMN TO/DROP COLUMN
+
+## Add chave estrangeira
+
+ALTER TABLE tabela ADD CONSTRAINT fk_....
+FOREIGN KEY (FK)
+REFERENCES tcidade(PK);
+
+## Check (restrição de valores na hora da inserção)
+
+ALTER TABLE tabela ADD CONSTRAINT CK_....
+CHECK (campo IN (valore,(s)));
+
+## View
+
+CREATE VIEWS nomeView AS ...<select>
+
+## Criando sequência (tipo um auto_increment do mySQL)
+
+CREATE SEQUENCE nomeSequencia START WITH numero(ex: 1);	
+
+INSERT INTO TALUNO(COD_ALUNO,NOME,CIDADE,CEP) 
+VALUES (nomeSequencia.NEXTVAL,'VALDO','CANOAS','11000000'); -- a sequência não é feita automaticamente, assim é necessário utilizar o comando 'nomeSquencia.NEXTVAL'
+
+SELECT nomeSequencia.CURRVAL FROM DUAL; -- aqui é pego o valor atual da sequência
+
+existem algumas caracteristica para adicionar na hora de criar uma sequência como: INCREMENT BY valor, MAX/MINVALUES, NOCACHE, NOCYCLE
+
+## Indexes e Sinonimos
+
+CREATE INDEX nomeIndex ON nomeTabela(nomeCampo, ...)
+
+CREATE SYNONYM nomeSinonimo FOR nomeTabela
+
+## RECORD
+TYPE nomeRec IS RECORD(...parametros)
+nomeVar nomeRec;
+
+--
+nomeVar nomeTabela%ROWTYPE --- %TYPE pega somente o tipo do campo, ou seja, ROWTYPE <> TYPE pois o %ROWTYPE cria uma cópia da estrutura da tabela
+-- essa linha de comando também pode ser considerada um RECORD, mesmo sem o TYPE ... IS RECORD...
+
+
+### Matriz ou Associative Arrays(depende do caso)
+TYPE nome IS TABLE OF nomeTabela.campo%TYPE INDEX BY tipo; -- tipo = binary_integer
+
+### Cursores
+CURSOR nomeCursos IS ....<select>
+- precisa abrir e fechar o cursor - OPEN/CLOSE nomeCursor
+- é possível usar parametros
+
+### Exceptions
+DECLARE -> BEGIN -> EXCEPTION -> END
+
+exemplo exception:
+EXCEPTION
+  WHEN no_data_found THEN -- no_data_found é um tipo de erro
+    RAISE_APPLICATION_ERROR(-20001, -- é um código de erro 
+           'Aluno Inexistente! '||SQLCODE||' '||SQLERRM); -- mensagens de erro
+END;
+
+
+### Comandos executáveis (PROCEDURE, FUNCTIONS...)
+DECLARE -> BEGIN -> END -- bloco anônimo
+DECLARE -- onde são declaradas as variaveis
+BEGIN -- onde começa o comando
+END -- sinaliza o fim do comando
+
+LOOP - EXIT WHEN/ IF/ELIF/ FOR IN
+FETCH INTO-> pega valor e insere em variaveis
+%ROWCOUNT, %NOTFOUND
+FOR IN -- forreach
+
+## PROCEDURE
+msm coisa que bloco pl/sql, porém da pra chama-lo e deixa de ser anônimo 
+
+CREATE OR REPLACE PROCEDURE nomeProcedura(parametros, ..) IS/AS bloco pq/sql
+EXEC nomeProcedure(); -- executar procedure (não funcionou no dbeaver)
+
+declare -- executar procedure (funciona)
+begin
+  nomeProcedure();
+end;
+
+## FUNCTION
+CREATE OR REPLACE FUNCTION nomeFucntion(parametro) RETURN tipoRetorno .... -- o return é o que difere uma procedure de uma function
+
+## PACKAGE 
+CREATE OR REPLACE PACKAGE [BODY]
+
+## TRIGGER
+CREATE TRIGGER nomeTrigger
+BEFORE/AFTER INSERT/DELETE/UPDATE ON nomeTabela -- nessa linha é definido quando a trigger é ativada, existem algumas possíbilidades para faze-la
+INSTEAD OF/ -- ao contrario do BEFORE e AFTER, essa função ativa o trigger e ignora a função realizada para ativa-lo (só roda o trigger)
+
+- em alguns caso é possível usar em if/elif, as condições (inserting), (deleting) ou (updating)
+- em um ins/updt/del com vários registros é importante adicionar a função FOR EACH ROW, para a trigger ser ativada para cada linha do ins/updt/del
+
+## DATABASE LINK
+CREATE DATABASE LINK nomeDBLink CONNECT TO user INDENTIFIED BY "senha" USING "tns" - tem que estar conectado com a matriz da rede
+
+## DML Avançada
+
+### INSERT ALL
+INSERT ALL INTO nomeTabela INTO nomeTabela SELECT * FROM .... -- é um insert que insere varias vezes, os valores podem vir de um select 
+você pode adicionar condições em um insert all. Ex: WHEN condição THEN INTO tabela() VALUES()
+
+### MERGE INTO 
+MERGE INTO tabela USING(select) ON (ligaçãoDeChaves) condições e dml -- o merge é usado para fazer alterações em uma tabela com base em valores combinados de outras tabelas. Exemplos no script 27
+
+using: UNSING(select ...) 
+       ON ()
+condições = WHEN MATCHED THEN / WHEN NOT MATCHED THEN
+
+## COLLECTION 
+Existem 3 tipos: Associative Arrays, Nested Tables e Varrays
+
+### ASSOCIATIVE ARRAYS
+TYPE nomeAA IS TABLE OF nomeTabela%ROWTYPE INDEX BY BINARY_INTEGER -- ao inves de %ROWTYPE pode ser %TYPE, o index by é o index do array
+nomeVariavel nomeAA -- normalmente associamos esse associative array em uma variavel para realizar os outros comando mais facil
+
+### NESTED TABLE
+TYPE nomeNT IS TABLE OF nomeTabela.nomeColuna -- o nested é usado para as colunas de uma tabela 
+nomeVariavel nomeNT := nomeNT() -- sim, tem que instanciar um objeto. Além disso, para adicionar novos valores é necessario usar o EXTEND
+
+### VARRAYS 
+TYPE nomeVarrays IS VARRAYS(tamanhoVarrays) OF nomeTabela.nomeCampo -- aqui você tem que dar o tamanho máximo do array
+nomeVariavel nomeVarrays := nomeVarrays() -- ... tmb tem que usar EXTEND. Ex: nomeVariavel.EXTEND; -- isso 'abre' espaço para inserir um valor
+
+### METODOS
+aqui citarei alguns métodos para utilizar junto as collection: EXIST(n), COUNT, FIRST/LAST, PRIOR(N)/NEXT(N), EXTEND[(n,i)/(n)], TRIM[(n)], DELETE[(n)/(m,n)] -- no delete(m,n) deleta os valores de m...n. no extend(n,i) adiciona n copias do elemento i.  
